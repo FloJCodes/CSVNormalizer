@@ -1,17 +1,35 @@
 #include "io.hpp"
+#include "parser.hpp"
 #include <iostream>
 
+Parser parser(',');
+
 int main() {
-    std::cout << "Hello, World!" << std::endl;
     try {
-        read_lines("../../../data/customers-100.csv", [](const std::string& line) {
-            std::cout << line << std::endl;
+        read_lines("../../../data/customers-100.csv", [&](const std::string& line) 
+            {
+				parser.parseLine(line);
             });
     }
-    catch (const std::exception& ex) {
-        std::cerr << "Fehler: " << ex.what() << std::endl;
-        std::cin.get(); // File stays open
+    catch (const std::exception& ex) 
+    {
+        std::cerr << "Error: " << ex.what() << std::endl;
     }
-    std::cin.get(); // File stays open
+    
+	const auto& rows = parser.getRows();
+    for (const auto& row : rows)
+    {
+        for (int i = 0; i < row.size(); i++)
+        {
+			std::cout << row[i];
+            if (i < row.size() - 1)
+            {
+				std::cout << "|";
+            }
+        }
+        std::cout << std::endl;
+    }
+
+
     return 0;
 }

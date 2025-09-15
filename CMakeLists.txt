@@ -5,5 +5,5 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-add_executable(csv_normalizer src/main.cpp "src/io.cpp")
+add_executable(csv_normalizer src/main.cpp "src/io.cpp" "src/parser.cpp")
 target_include_directories(csv_normalizer PRIVATE include)
