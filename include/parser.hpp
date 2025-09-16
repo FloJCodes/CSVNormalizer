@@ -4,10 +4,13 @@
 
 class Parser {
 public:
-    Parser(char delimiter = ',');
-    std::vector<std::string> parseLine(const std::string& line);
-    const std::vector<std::vector<std::string>>& getRows() const;
+    Parser(char m_delimiter = ',');
+    std::vector<std::string> ParseLine(const std::string& line);
+    const std::vector<std::vector<std::string>>& ValidateRows();
+    const std::vector<std::vector<std::string>>& GetRows() const;
+    const std::vector<std::vector<std::string>>& GetErrorRows() const;
 private:
-    char delimiter_;
-    std::vector<std::vector<std::string>> rows_;
+    char m_delimiter;
+    std::vector<std::vector<std::string>> m_rows;
+    std::vector<std::vector<std::string>> m_errorRows;
 };
