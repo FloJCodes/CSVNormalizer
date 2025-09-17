@@ -1,6 +1,9 @@
 #pragma once
 
+#include "parser.hpp"
+
 #include <string>
 #include <functional>
 
-void Read_lines(const std::string& filename, std::function<void(const std::string&)> on_line);
+void ReadLines(const std::string& filename, std::function<void(const std::string&)> on_line);
+void ReadCsv(const std::string& filename, Parser& parser);

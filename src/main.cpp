@@ -1,15 +1,19 @@
 #include "io.hpp"
 #include "parser.hpp"
 #include <iostream>
+#include <fstream>
 
 Parser parser(',');
 
 int main() {
     try {
-        Read_lines("../../../data/customers-100.csv", [&](const std::string& line) 
-            {
-				parser.ParseLine(line);
-            });
+        std::ifstream file("../../../data/customers-100.csv");
+		if (!file.is_open())
+		{
+			throw std::runtime_error("Could not open file");
+		}
+
+		parser.ParseStream(file);
     }
     catch (const std::exception& ex) 
     {
@@ -19,7 +23,7 @@ int main() {
 	const auto& rows = parser.GetRows();
     for (const auto& row : rows)
     {
-        for (int i = 0; i < row.size(); i++)
+        for (int i = 0; i < row.size(); ++i)
         {
 			std::cout << row[i];
             if (i < row.size() - 1)
@@ -33,10 +37,11 @@ int main() {
 	const auto& errorRows = parser.ValidateRows();
     if (!errorRows.empty())
     {
+		std::cout << "----------------------------------------" << std::endl;
         std::cout << "Error rows:" << std::endl;
         for (const auto& row : errorRows)
         {
-            for (int i = 0; i < row.size(); i++)
+            for (int i = 0; i < row.size(); ++i)
             {
                 std::cout << row[i];
                 if (i < row.size() - 1)

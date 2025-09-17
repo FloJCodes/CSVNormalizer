@@ -15,19 +15,25 @@ std::vector<std::string> Parser::ParseLine(const std::string& line)
     bool inQuotes = false;
 
 	// Iterate through each character in the line
-    for (char c : line)
+    for (int i = 0; i < line.size(); ++i)
     {
+        char c = line[i];
         if (c == '"')
         {
-            inQuotes = !inQuotes;
+            // CSV-Standard: ein doppeltes "" innerhalb eines Feldes ergibt ein "
+            if (inQuotes && i + 1 < line.size() && line[i + 1] == '"') {
+                field += '"';
+                ++i;
+            }
+            else {
+                inQuotes = !inQuotes;
+            }
         }
-        // If m_delimiter ist reached & not in quotes, save field and clear field variable
         else if (c == m_delimiter && !inQuotes)
         {
             fields.push_back(field);
             field.clear();
         }
-		// Otherwise, add character to current field
         else
         {
             field += c;
@@ -35,9 +41,98 @@ std::vector<std::string> Parser::ParseLine(const std::string& line)
     }
 
     fields.push_back(field);
-    m_rows.push_back(fields);
 
     return fields;
+}
+
+void Parser::ParseStream(std::istream& is)
+{
+    std::string line;
+    std::string multiline;
+    bool building_multiline = false;
+
+    while (std::getline(is, line))
+    {
+        if (!building_multiline)
+        {
+			// Count quotes in the line
+            size_t quoteCount = 0;
+            for (size_t i = 0; i < line.size(); ++i) 
+            {
+                if (line[i] == '"') 
+                {
+					// Ignore "" as escaped quotes
+                    if (i + 1 < line.size() && line[i + 1] == '"') 
+                    {
+                        ++i;
+                    }
+                    else 
+                    {
+                        ++quoteCount;
+                    }
+                }
+            }
+
+            if (quoteCount % 2 == 0) 
+            {
+                // Parse normal for even amount
+                auto fields = ParseLine(line);
+                m_rows.push_back(fields);
+            }
+            else 
+            {
+                // Start multiline für odd amount
+                multiline = line;
+                building_multiline = true;
+            }
+        }
+        else
+        {
+            // Count quotes in new line
+            size_t quoteCount = 0;
+            for (size_t i = 0; i < line.size(); ++i) 
+            {
+                if (line[i] == '"') 
+                {
+					// Ignore "" as escaped quotes
+                    if (i + 1 < line.size() && line[i + 1] == '"') 
+                    {
+                        ++i;
+                    }
+                    else 
+                    {
+                        ++quoteCount;
+                    }
+                }
+            }
+
+            if (quoteCount % 2 == 0)
+            {
+                // New line has even quotes : Error in previous line
+				auto prevRow = ParseLine(multiline);
+				m_errorRows.push_back(prevRow);
+
+                auto thisRow = ParseLine(line);
+                m_rows.push_back(thisRow);
+            }
+            else
+            {
+				// New line has odd quotes : Parse full multiline
+                multiline += "\n" + line;
+                auto fields = ParseLine(multiline);
+                m_rows.push_back(fields);
+            }
+
+            multiline.clear();
+            building_multiline = false;
+        }
+    }
+
+    // End of file but still multiline open : Error
+    if (!multiline.empty() && building_multiline) {
+        auto fields = ParseLine(multiline);
+        m_errorRows.push_back(fields);
+    }
 }
 
 const std::vector<std::vector<std::string>>& Parser::ValidateRows()
@@ -47,10 +142,28 @@ const std::vector<std::vector<std::string>>& Parser::ValidateRows()
 	// Iterate through each row and check if number of fields matches the first row
     for (const std::vector<std::string>& row : m_rows)
     {
+        bool isError = false;
+
         if (row.size() != fieldAmount)
         {
-            m_errorRows.push_back(row);
+            isError = true;
         }
+        else
+        {
+            for (const std::string& field : row)
+            {
+                if (field.empty())
+                {
+                    isError = true;
+                    break;
+                }
+            }
+        }
+
+		if (isError)
+		{
+			m_errorRows.push_back(row);
+		}
     }
 
     return m_errorRows;
