@@ -13,10 +13,12 @@ public:
     const std::vector<std::vector<std::string>>& ValidateRows();
     const std::vector<std::vector<std::string>>& GetRows() const;
     const std::vector<std::vector<std::string>>& GetErrorRows() const;
+    const std::vector<std::vector<std::string>>& GetValidRows() const;
 private:
     char m_delimiter;
     std::vector<std::vector<std::string>> m_rows;
     std::vector<std::vector<std::string>> m_errorRows;
+    std::vector<std::vector<std::string>> m_validRows;
 };
 
 #endif // PARSER_HPP

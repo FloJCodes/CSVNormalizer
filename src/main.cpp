@@ -52,5 +52,24 @@ int main() {
             std::cout << std::endl;
         }
     }
+
+	const auto& validRows = parser.GetValidRows();
+    if (!validRows.empty())
+    {
+        std::cout << "----------------------------------------" << std::endl;
+        std::cout << "Valid rows:" << std::endl;
+        for (const auto& row : validRows)
+        {
+            for (int i = 0; i < row.size(); ++i)
+            {
+                std::cout << row[i];
+                if (i < row.size() - 1)
+                {
+                    std::cout << "|";
+                }
+            }
+            std::cout << std::endl;
+        }
+    }
     return 0;
 }

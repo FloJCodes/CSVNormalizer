@@ -166,6 +166,15 @@ const std::vector<std::vector<std::string>>& Parser::ValidateRows()
 		}
     }
 
+	// Create valid rows by excluding error rows
+	for (const std::vector<std::string>& row : m_rows)
+	{
+		if (std::find(m_errorRows.begin(), m_errorRows.end(), row) == m_errorRows.end())
+		{
+			m_validRows.push_back(row);
+		}
+	}
+
     return m_errorRows;
 }
 
@@ -177,4 +186,9 @@ const std::vector<std::vector<std::string>>& Parser::GetRows() const
 const std::vector<std::vector<std::string>>& Parser::GetErrorRows() const
 {
     return m_errorRows;
+}
+
+const std::vector<std::vector<std::string>>& Parser::GetValidRows() const
+{
+    return m_validRows;
 }
