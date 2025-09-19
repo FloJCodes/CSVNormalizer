@@ -20,15 +20,18 @@ std::vector<std::string> Parser::ParseLine(const std::string& line)
         char c = line[i];
         if (c == '"')
         {
-            // CSV-Standard: ein doppeltes "" innerhalb eines Feldes ergibt ein "
-            if (inQuotes && i + 1 < line.size() && line[i + 1] == '"') {
+			// Escape quotes by doubling them
+            if (inQuotes && i + 1 < line.size() && line[i + 1] == '"') 
+            {
                 field += '"';
                 ++i;
             }
-            else {
+            else 
+            {
                 inQuotes = !inQuotes;
             }
         }
+		// Delimiter outside quotes ends the field
         else if (c == m_delimiter && !inQuotes)
         {
             fields.push_back(field);
@@ -51,13 +54,14 @@ void Parser::ParseStream(std::istream& is)
     std::string multiline;
     bool building_multiline = false;
 
+	// Iterate through each line in the stream
     while (std::getline(is, line))
     {
         if (!building_multiline)
         {
 			// Count quotes in the line
-            size_t quoteCount = 0;
-            for (size_t i = 0; i < line.size(); ++i) 
+            int quoteCount = 0;
+            for (int i = 0; i < line.size(); ++i) 
             {
                 if (line[i] == '"') 
                 {
@@ -76,7 +80,7 @@ void Parser::ParseStream(std::istream& is)
             if (quoteCount % 2 == 0) 
             {
                 // Parse normal for even amount
-                auto fields = ParseLine(line);
+                std::vector<std::string> fields = ParseLine(line);
                 m_rows.push_back(fields);
             }
             else 
@@ -89,8 +93,8 @@ void Parser::ParseStream(std::istream& is)
         else
         {
             // Count quotes in new line
-            size_t quoteCount = 0;
-            for (size_t i = 0; i < line.size(); ++i) 
+            int quoteCount = 0;
+            for (int i = 0; i < line.size(); ++i) 
             {
                 if (line[i] == '"') 
                 {
@@ -109,17 +113,17 @@ void Parser::ParseStream(std::istream& is)
             if (quoteCount % 2 == 0)
             {
                 // New line has even quotes : Error in previous line
-				auto prevRow = ParseLine(multiline);
+                std::vector<std::string> prevRow = ParseLine(multiline);
 				m_errorRows.push_back(prevRow);
 
-                auto thisRow = ParseLine(line);
+                std::vector<std::string> thisRow = ParseLine(line);
                 m_rows.push_back(thisRow);
             }
             else
             {
 				// New line has odd quotes : Parse full multiline
                 multiline += "\n" + line;
-                auto fields = ParseLine(multiline);
+                std::vector<std::string> fields = ParseLine(multiline);
                 m_rows.push_back(fields);
             }
 
@@ -128,28 +132,31 @@ void Parser::ParseStream(std::istream& is)
         }
     }
 
-    // End of file but still multiline open : Error
-    if (!multiline.empty() && building_multiline) {
-        auto fields = ParseLine(multiline);
+    // End of file but multiline still open : Error
+    if (!multiline.empty() && building_multiline) 
+    {
+        std::vector<std::string> fields = ParseLine(multiline);
         m_errorRows.push_back(fields);
     }
 }
 
 const std::vector<std::vector<std::string>>& Parser::ValidateRows()
 {
-    size_t fieldAmount = m_rows.empty() ? 0 : m_rows[0].size();
+    int fieldAmount = m_rows.empty() ? 0 : m_rows[0].size();
 
-	// Iterate through each row and check if number of fields matches the first row
+	// Iterate through each row
     for (const std::vector<std::string>& row : m_rows)
     {
         bool isError = false;
 
+        // Check if number of fields matches the first row
         if (row.size() != fieldAmount)
         {
             isError = true;
         }
         else
         {
+            // Check if fields are empty
             for (const std::string& field : row)
             {
                 if (field.empty())
@@ -160,6 +167,7 @@ const std::vector<std::vector<std::string>>& Parser::ValidateRows()
             }
         }
 
+		// Collect error rows in member variable
 		if (isError)
 		{
 			m_errorRows.push_back(row);
